@@ -13,8 +13,8 @@ fn main() {
     let curve = EllipticCurve::new(0, 7, 223);
     // let secp256k = EllipticCurve::new(0, 7, 0xfffffff);
     let _generator = CurvePoint::new(192, 105, &curve);
-    let r = FieldElement::new(8, 19);
-    println!("{}", (r / 2));
+    // let r = FieldElement::new(8, 19);
+    println!("{}", (-3 % 7));
 
     // println!("{}", n - 518161494337 as u64);
 }
@@ -77,4 +77,31 @@ fn test_div_fieldelement() {
     assert_eq!(a, FieldElement::new(4, 31));
     let c = FieldElement::new(17, 31);
     assert_eq!(c.pow(-3), FieldElement::new(29, 31));
+}
+
+#[test]
+#[should_panic]
+fn test_create_invalid_curvepoint() {
+    let curve = EllipticCurve::new(0, 7, 223);
+    CurvePoint::new(200, 119, &curve);
+}
+
+#[test]
+fn test_create_valid_curvepoint() {
+    let curve = EllipticCurve::new(0, 7, 223);
+    CurvePoint::new(192, 105, &curve);
+}
+
+#[test]
+fn test_curve_add() {
+    let curve = EllipticCurve::new(0, 7, 223);
+    let p1 = CurvePoint::new(192, 105, &curve);
+    let p2 = CurvePoint::new(17, 56, &curve);
+    assert_eq!(&p1 + &p2, CurvePoint::new(170, 142, &curve));
+    assert_ne!(&p1 + &p2, CurvePoint::new(60, 139, &curve));
+    assert_eq!(p1 + p2, CurvePoint::new(170, 142, &curve));
+    let p3 = CurvePoint::new(192, 105, &curve);
+    let p4 = CurvePoint::new(192, 105, &curve);
+    assert_eq!(&p3 + &p3, CurvePoint::new(49, 71, &curve));
+    assert_eq!(p3 + p4, CurvePoint::new(49, 71, &curve));
 }
