@@ -1,5 +1,5 @@
 use num_bigint::{BigUint, ToBigInt, ToBigUint};
-use num_integer::Integer;
+// use num_integer::Integer;
 use std::fmt;
 // use std::ops::{Div, Sub, Rem};
 // use std::cmp::PartialOrd;
@@ -35,6 +35,10 @@ impl FieldElement {
         self.value += &other.value;
         self.value %= &self.prime;
     }
+    pub fn add_int_ref(&mut self, other: &BigUint) {
+        self.value += other;
+        self.value %= &self.prime;
+    }
     pub fn get_value(&self) -> &BigUint {
         &self.value
     }
@@ -48,35 +52,18 @@ impl FieldElement {
     where
         T: ToBigInt + ToBigUint,
     {
+        // Set all types to bigint
+        let one = 1.to_bigint().unwrap();
         let big_exponent = exp.to_bigint().unwrap();
-        if big_exponent < 0.to_bigint().unwrap() {
-            let power = -big_exponent;
-            return FieldElement::new(1, self.prime.clone())
-                / FieldElement::raise(&self, power.to_biguint().unwrap());
-        }
-        FieldElement::raise(&self, exp)
-    }
-    pub fn raise<T>(base: &FieldElement, exponent: T) -> FieldElement
-    where
-        T: ToBigUint,
-    {
-        let mut result = FieldElement::from(&base);
-        let mut accumulator = FieldElement::new(1, base.get_prime().clone());
-        let mut exp = exponent.to_biguint().unwrap();
-        // let zero = 0.to_biguint().unwrap();
-        let one = 1.to_biguint().unwrap();
-        let two = 2.to_biguint().unwrap();
-        while &exp > &one {
-            if (&exp).is_even() {
-                result.square();
-                exp /= &two;
-            } else {
-                accumulator *= &result;
-                exp -= &one;
-            }
-        }
-        result *= accumulator;
-        result
+        let prime_less_one = self.prime.to_bigint().unwrap() - &one;
+
+        // Reduce exponent to its smallest positive equivalent using bigint's builtin modpow, which uses true mod not %
+        let reduced_expt = big_exponent.modpow(&one, &prime_less_one);
+        // Compute self ** reduced_expt
+        let new_value = self
+            .value
+            .modpow(&reduced_expt.to_biguint().unwrap(), &self.prime);
+        FieldElement::new(new_value, self.prime.clone())
     }
 }
 
@@ -103,6 +90,7 @@ impl PartialEq for FieldElement {
         self.prime == other.prime && self.value == other.value
     }
 }
+impl Eq for FieldElement {}
 
 impl<Rhs> std::ops::Add<Rhs> for FieldElement
 where
@@ -113,8 +101,6 @@ where
         FieldElement::new(self.value + other.to_biguint().unwrap(), self.prime)
     }
 }
-
-impl Eq for FieldElement {}
 
 impl<Rhs> std::ops::AddAssign<Rhs> for FieldElement
 where
@@ -171,14 +157,11 @@ where
 {
     type Output = FieldElement;
     fn sub(self: Self, other: Rhs) -> FieldElement {
-        let mut multiplier = 1.to_biguint().unwrap();
-        let other_val = other.to_biguint().unwrap();
-        let mut self_val = self.value.clone();
-        while self_val < other_val {
-            self_val = (&self_val) + (self.get_prime() * &multiplier);
-            multiplier *= 2.to_biguint().unwrap();
+        let other = other.to_biguint().unwrap() % &self.prime;
+        if self.value < other {
+            return FieldElement::new((self.value + &self.prime) - other, self.prime.clone());
         }
-        FieldElement::new(self_val - other_val, self.prime.clone())
+        FieldElement::new(self.value - other, self.prime.clone())
     }
 }
 
@@ -188,14 +171,11 @@ where
 {
     type Output = FieldElement;
     fn sub(self: Self, other: Rhs) -> FieldElement {
-        let mut multiplier = 1.to_biguint().unwrap();
-        let other_val = other.to_biguint().unwrap();
-        let mut self_val = self.value.clone();
-        while self_val < other_val {
-            self_val = (&self_val) + (self.get_prime() * &multiplier);
-            multiplier *= 2.to_biguint().unwrap();
+        let other = other.to_biguint().unwrap() % &self.prime;
+        if self.value < other {
+            return FieldElement::new((&self.value + &self.prime) - other, self.prime.clone());
         }
-        FieldElement::new(self_val - other_val, self.prime.clone())
+        FieldElement::new(&self.value - other, self.prime.clone())
     }
 }
 
@@ -204,14 +184,12 @@ where
     Rhs: ToBigUint,
 {
     fn sub_assign(&mut self, other: Rhs) {
-        let mut multiplier = 1.to_biguint().unwrap();
-        let other_val = other.to_biguint().unwrap();
-        let mut self_val = self.value.clone();
-        while self_val < other_val {
-            self_val = (&self_val) + (self.get_prime() * &multiplier);
-            multiplier *= 2.to_biguint().unwrap();
+        let other = other.to_biguint().unwrap() % &self.prime;
+        if self.value < other {
+            self.value = &self.value + &self.prime - other;
+        } else {
+            self.value -= other;
         }
-        self.value = self_val - other_val % &self.prime;
     }
 }
 
