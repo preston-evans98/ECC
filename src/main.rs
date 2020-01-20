@@ -105,3 +105,33 @@ fn test_curve_add() {
     assert_eq!(&p3 + &p3, CurvePoint::new(49, 71, &curve));
     assert_eq!(p3 + p4, CurvePoint::new(49, 71, &curve));
 }
+
+#[test]
+fn test_curve_mul() {
+    let curve = EllipticCurve::new(0, 7, 223);
+    let p1 = CurvePoint::new(143, 98, &curve);
+    let r1 = CurvePoint::new(64, 168, &curve);
+    assert_eq!(&p1 * 2, r1);
+    assert_eq!(p1 * 2, r1);
+    let p2 = CurvePoint::new(192, 105, &curve);
+    let r2 = CurvePoint::new(49, 71, &curve);
+    assert_eq!(&p2 * 2, r2);
+    assert_eq!(p2 * 2, r2);
+    let p3 = CurvePoint::new(47, 71, &curve);
+    let r3 = CurvePoint::new(36, 111, &curve);
+    assert_eq!(&p3 * 2, r3);
+    assert_eq!(p3 * 2, r3);
+    let p4 = CurvePoint::new(47, 71, &curve);
+    let r4 = CurvePoint::new(194, 51, &curve);
+    assert_eq!(&p4 * 4, r4);
+    assert_eq!(p4 * 4, r4);
+    let p5 = CurvePoint::new(47, 71, &curve);
+    let r5 = CurvePoint::new(116, 55, &curve);
+    assert_eq!(&p5 * 8, r5);
+    assert_eq!(p5 * 8, r5);
+    let p6 = CurvePoint::new(47, 71, &curve);
+    let r6 = CurvePoint::infinity(&curve);
+    assert_eq!(&p6 * 21, r6);
+    assert_ne!(&p6 * 21, r5);
+    assert_eq!(p6 * 21, r6);
+}
