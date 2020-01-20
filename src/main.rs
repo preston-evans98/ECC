@@ -1,7 +1,6 @@
-// use num_bigint::{BigUint};
+use num_bigint::BigUint;
 extern crate num_integer;
 // use num_integer::Integer;
-
 mod elliptic_curve;
 mod finite_field;
 use elliptic_curve::{CurvePoint, EllipticCurve};
@@ -9,14 +8,11 @@ use finite_field::FieldElement;
 // use finiteField;
 
 fn main() {
-    // let n = BigUint::parse_bytes(b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141", 16).unwrap();
-    let curve = EllipticCurve::new(0, 7, 223);
-    // let secp256k = EllipticCurve::new(0, 7, 0xfffffff);
-    let _generator = CurvePoint::new(192, 105, &curve);
-    // let r = FieldElement::new(8, 19);
-    println!("{}", (-3 % 7));
-
-    // println!("{}", n - 518161494337 as u64);
+    let p = BigUint::parse_bytes(
+        b"fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+        16,
+    )
+    .unwrap();
 }
 
 #[cfg(test)]
@@ -134,4 +130,24 @@ fn test_curve_mul() {
     assert_eq!(&p6 * 21, r6);
     assert_ne!(&p6 * 21, r5);
     assert_eq!(p6 * 21, r6);
+}
+
+#[test]
+fn test_secp256k1() {
+    let S256 = EllipticCurve::new_large(
+        b"0",
+        b"7",
+        b"fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+    );
+    let G = CurvePoint::new_large(
+        b"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        b"483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
+        &S256,
+    );
+    let n = BigUint::parse_bytes(
+        b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        16,
+    )
+    .unwrap();
+    assert_eq!(G * n, CurvePoint::infinity(&S256));
 }

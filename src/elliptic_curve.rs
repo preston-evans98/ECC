@@ -1,7 +1,7 @@
 use crate::finite_field::FieldElement;
 use num_bigint::{BigUint, ToBigUint};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EllipticCurve {
     a: FieldElement,
     b: FieldElement,
@@ -27,6 +27,13 @@ impl EllipticCurve {
             b: FieldElement::new(b, prime),
         }
     }
+    pub fn new_large(a: &[u8], b: &[u8], prime: &[u8]) -> EllipticCurve {
+        let a = BigUint::parse_bytes(a, 16).unwrap();
+        let b = BigUint::parse_bytes(b, 16).unwrap();
+        let prime = BigUint::parse_bytes(prime, 16).unwrap();
+        EllipticCurve::new(a, b, prime)
+    }
+
     pub fn get_prime(&self) -> &BigUint {
         self.a.get_prime()
     }
@@ -63,6 +70,11 @@ impl<'a> CurvePoint<'a> {
             );
         }
         new
+    }
+    pub fn new_large(x: &[u8], y: &[u8], curve: &'a EllipticCurve) -> CurvePoint<'a> {
+        let x = BigUint::parse_bytes(x, 16).unwrap();
+        let y = BigUint::parse_bytes(y, 16).unwrap();
+        CurvePoint::new(x, y, curve)
     }
     pub fn from(other: &'a CurvePoint) -> CurvePoint<'a> {
         if other.is_infinity() {
