@@ -31,10 +31,10 @@ impl EllipticCurve {
         self.a.get_prime()
     }
     pub fn get_a(&self) -> &BigUint {
-        self.a.get_prime()
+        self.a.get_value()
     }
     pub fn get_b(&self) -> &BigUint {
-        self.a.get_prime()
+        self.b.get_value()
     }
     pub fn is_valid(&self, x: &FieldElement, y: &FieldElement) -> bool {
         y.pow(2) == x.pow(3) + &self.a * x + &self.b
@@ -53,7 +53,7 @@ impl<'a> CurvePoint<'a> {
             y: FieldElement::new(y, curve.get_prime().clone()),
             curve,
         };
-        if !curve.is_valid(&new.x, &new.y) {
+        if !new.is_infinity() && !curve.is_valid(&new.x, &new.y) {
             panic!(
                 "Point ({:?}, {:?}) is not on curve y**2 = x**3 + {}*x + {}",
                 new.x.get_value(),
@@ -140,7 +140,10 @@ impl<'a> std::ops::Add for CurvePoint<'a> {
                 }
                 // Case 2: they're the same point. Take the derivative to find tangent line at that point
                 // y**2 = x**3 + ax + b => 2y * dy = 3(x**2) + a => dy / dx = 3(x**2) + a / 2y
-                // Thus slope = (3(x**2) + a) / 2y
+                // Thus slope = (3(x**2) + a) / 2y. Note that if 7=0, slope is infinite, so we should return the point at infinity
+                if y1.get_value() == &0.to_biguint().unwrap() {
+                    return CurvePoint::infinity(self.get_curve());
+                }
                 let mut numerator = x1.pow(2) * 3; // 3 x**2
                 numerator.add_int_ref(self.get_curve().get_a()); // 3x**2 + a
                 numerator / (y1 * 2)
@@ -149,7 +152,9 @@ impl<'a> std::ops::Add for CurvePoint<'a> {
                 (y2 - y1) / (x2 - x1)
             }
         };
+        // x3 = slope**2 - x1 - x2. Proof too large for comments here. See Readme
         let x3 = slope.pow(2) - x1 - x2;
+        // y3 = slope * (x1 - x3) - y1
         let y3 = (slope * (x1 - &x3)) - y1;
         CurvePoint::new(x3, y3, self.get_curve())
     }
@@ -167,7 +172,7 @@ impl<'a> std::ops::Add for &CurvePoint<'a> {
         if other.is_infinity() {
             return CurvePoint::new(self.get_x(), self.get_y(), self.get_curve());
         } else if self.is_infinity() {
-            return CurvePoint::new(self.get_x(), self.get_y(), self.get_curve());
+            return CurvePoint::new(other.get_x(), other.get_y(), self.get_curve());
         }
 
         let x1 = self.get_x();
@@ -192,8 +197,54 @@ impl<'a> std::ops::Add for &CurvePoint<'a> {
                 (y2 - y1) / (x2 - x1)
             }
         };
+        // x3 = slope**2 - x1 - x2. Proof too large for comments here. See Readme
         let x3 = slope.pow(2) - x1 - x2;
+        // y3 = slope * (x1 - x3) - y1
         let y3 = (slope * (x1 - &x3)) - y1;
         CurvePoint::new(x3, y3, self.get_curve())
+    }
+}
+
+impl<'a, Rhs> std::ops::Mul<Rhs> for CurvePoint<'a>
+where
+    Rhs: ToBigUint,
+{
+    type Output = CurvePoint<'a>;
+    fn mul(self, rhs: Rhs) -> CurvePoint<'a> {
+        let zero = 0.to_biguint().unwrap();
+        let one = 1.to_biguint().unwrap();
+        let mut rhs = rhs.to_biguint().unwrap();
+        let mut current = CurvePoint::new(self.get_x(), self.get_y(), self.get_curve());
+        let mut result = CurvePoint::infinity(&self.curve);
+        while rhs != zero {
+            if &rhs & &one != zero {
+                result = &result + &current;
+            }
+            current = &current + &current;
+            rhs >>= 1;
+        }
+        result
+    }
+}
+
+impl<'a, Rhs> std::ops::Mul<Rhs> for &CurvePoint<'a>
+where
+    Rhs: ToBigUint,
+{
+    type Output = CurvePoint<'a>;
+    fn mul(self, rhs: Rhs) -> CurvePoint<'a> {
+        let zero = 0.to_biguint().unwrap();
+        let one = 1.to_biguint().unwrap();
+        let mut rhs = rhs.to_biguint().unwrap();
+        let mut current = CurvePoint::new(self.get_x(), self.get_y(), self.get_curve());
+        let mut result = CurvePoint::infinity(&self.curve);
+        while rhs != zero {
+            if &rhs & &one != zero {
+                result = &result + &current;
+            }
+            current = &current + &current;
+            rhs >>= 1;
+        }
+        result
     }
 }
