@@ -10,8 +10,18 @@ In order to obtain the addition formula, note that:
 
 Got it? Let's start the proof: 
 Recall that for all points on the curve, **Y^2 = X^3 + aX + b** by the elliptic curve definition
-For all points which also lie on the line between P1 and P2, **Y = s*(X - X1) + Y1** where s is the slope of the line from P1 to P2. THis fact 
-Y^2 = x^3 + 
+Also recall from pre-algebra that all points which lie on the line between P1 and P2 are given by the equation, **Y = s*(X - X1) + Y1** where s is the slope of the line from P1 to P2. (For example, if (3, 5) is a point on a line with slope 2, then (4, 7) and(2.5, 4) are both on the line as well.)
+
+Combining these two formulas will give us an equation for all points that are on both the line between P1 and P2 and whatever elliptic curve we're interested in. More formally, this is the equation for all points at which the line intersects the curve:
+**(s.(X - X1) + Y1)^2 = X^3 + aX + b**
+
+Expanding that out we get:
+s(X-X1)^2 + 2sY1(X - X1) + Y1^2 = X^3 + aX + b
+
+
+
+
+
 
 Substituting from (1), we get =>  (P2.y + s*(P3.x - P2.x))^2 = P3.x^3 + a*P3.x + b 
 
