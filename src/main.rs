@@ -1,4 +1,4 @@
-use num_bigint::BigUint;
+use num_bigint::{BigUint, ToBigUint};
 extern crate num_integer;
 // use num_integer::Integer;
 mod elliptic_curve;
@@ -8,11 +8,45 @@ use finite_field::FieldElement;
 // use finiteField;
 
 fn main() {
-    let p = BigUint::parse_bytes(
+    let S256 = EllipticCurve::new_large(
+        b"0",
+        b"7",
         b"fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+    );
+    let G = CurvePoint::new_large(
+        b"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        b"483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
+        &S256,
+    );
+    let N = BigUint::parse_bytes(
+        b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
         16,
     )
     .unwrap();
+    // let z = BigUint::parse_bytes(b"bc62d4b80d9e36da29c16c5d4d9f11731f36052c72401a76c23c0fb5a9b74423", 16).unwrap();
+    // let r = BigUint::parse_bytes(b"37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6", 16).unwrap();
+    // let s = BigUint::parse_bytes(b"8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec", 16).unwrap();
+    let point = CurvePoint::new_large(
+        b"887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c",
+        b"61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34",
+        &S256,
+    );
+    // // println!("{:?}", G * n);
+    // let s_inv = s.modpow(&(&N - 2.to_biguint().unwrap()), &N); //pow(s, N-2, N)
+    // let u = &z * &s_inv % &N;
+    // let v = &r * &s_inv % &N;
+    println!(
+        "{}",
+        point.verify_signature(
+            b"7c076ff316692a3d7eb3c3bb0f8b1488cf72e1afcd929e29307032997a838a3d",
+            b"eff69ef2b1bd93a66ed5219add4fb51e11a840f404876325a1e8ffe0529a2c",
+            b"c7207fee197d27c618aea621406f6bf5ef6fca38681d82b2f06fddbdce6feab6",
+            &G,
+            &N
+        )
+    );
+
+    // assert_eq!(G * n, CurvePoint::infinity(&S256));
 }
 
 #[cfg(test)]
@@ -150,4 +184,42 @@ fn test_secp256k1() {
     )
     .unwrap();
     assert_eq!(G * n, CurvePoint::infinity(&S256));
+}
+
+#[test]
+fn test_validate_signature() {
+    let S256 = EllipticCurve::new_large(
+        b"0",
+        b"7",
+        b"fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f",
+    );
+    let G = CurvePoint::new_large(
+        b"79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        b"483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
+        &S256,
+    );
+    let N = BigUint::parse_bytes(
+        b"fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141",
+        16,
+    )
+    .unwrap();
+    let point = CurvePoint::new_large(
+        b"887387e452b8eacc4acfde10d9aaf7f6d9a0f975aabb10d006e4da568744d06c",
+        b"61de6d95231cd89026e286df3b6ae4a894a3378e393e93a0f45b666329a0ae34",
+        &S256,
+    );
+    assert!(point.verify_signature(
+        b"ec208baa0fc1c19f708a9ca96fdeff3ac3f230bb4a7ba4aede4942ad003c0f60",
+        b"ac8d1c87e51d0d441be8b3dd5b05c8795b48875dffe00b7ffcfac23010d3a395",
+        b"68342ceff8935ededd102dd876ffd6ba72d6a427a3edb13d26eb0781cb423c4",
+        &G,
+        &N
+    ));
+    assert!(point.verify_signature(
+        b"7c076ff316692a3d7eb3c3bb0f8b1488cf72e1afcd929e29307032997a838a3d",
+        b"eff69ef2b1bd93a66ed5219add4fb51e11a840f404876325a1e8ffe0529a2c",
+        b"c7207fee197d27c618aea621406f6bf5ef6fca38681d82b2f06fddbdce6feab6",
+        &G,
+        &N
+    ));
 }
