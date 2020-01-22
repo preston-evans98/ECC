@@ -35,6 +35,12 @@ impl FieldElement {
         self.value += &other.value;
         self.value %= &self.prime;
     }
+    pub fn zero_out(&mut self) {
+        self.value = 0.to_biguint().unwrap();
+    }
+    pub fn set_value(&mut self, other: &FieldElement) {
+        self.value = other.get_value().clone();
+    }
     pub fn add_int_ref(&mut self, other: &BigUint) {
         self.value += other;
         self.value %= &self.prime;
