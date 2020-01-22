@@ -102,4 +102,22 @@ Now that we have a formula for point addition, let's build a working crypto syst
 
 Now, let's add one wrinkle to our scheme. Rather than defining an elliptic curve over the field of real numbers, we'll define it over a finite field. As is often the case, swapping out the field over which an object is defined has no effect on its governing equations. The formulas we've outlined for addition and multiplication will hold exactly. The key advantage of using a finite field is that it makes the "log problem" (which for curve points, could just as well be called the "divison problem") extremely difficult. To get an intuition about why this is, let's take the example of integers (rather than curve points) over a finite field. 
 
-lets say that we have some finite field, maybe {0 .. 223}. 
+
+Let's say that we have a finite field, say F[223], which contains the numbers {0, 1, ..., 222}. Now say that we know 87^x = 219, and your job is to find x. If this were regular arithmetic, over the infinite field of real numbers, this would be easy. You can calculate log(base 87) of 219 using all sorts of numerical approximation techniques, including Newton's Method. Unfortunately, since this problem is defined over a finite field (of integers), Newton's method and other numerical tricks don't apply. Instead, you have to plug and chug with different values of x until you find one that works. 
+
+I wrote a little Python script to do just that...
+
+```
+>>>for i in range(0, 223):
+...     if pow(87, i, 223) == 219:
+...             print(i)
+...
+57
+131
+205
+>>>
+```
+
+... and as it turns out, in F[223], there are 3 such values. This is what makes the "discrete log problem" difficult. We don't know of any efficient methods (that is, anything much faster than guessing), for finding log(base b) of x. Also, even when such a solution is found it isn't necessarily unique. These two properties combine to make exponentiaton over finite fields a great way of hiding information. 
+
+As it turns out, the discrete log problem is also hard for Elliptic Curves. Given two points G and P, and the information that P = x * G, we don't know of any good method to calculate x. Note that this DOESN'T mean the log problem is impossible! I didn't say that such a number can't be found, just that we don't know how to find it efficiently. Maybe a breakthrough in algorithms will crack the discrete log problem, but I wouldn't hold your breath. It may turn out to be easy, or it may turn out to be impossible - we just don't know. In any case no one has solved it yet, and not for lack of trying. 
