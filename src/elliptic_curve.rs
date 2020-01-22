@@ -102,6 +102,18 @@ impl<'a> CurvePoint<'a> {
             curve,
         }
     }
+    #[allow(non_snake_case)]
+    pub fn verify_signature(&self, z: &[u8], r: &[u8], s: &[u8], G: &CurvePoint, N: &BigUint) -> bool {
+        let z = BigUint::parse_bytes(z, 16).unwrap();
+        let r = BigUint::parse_bytes(r, 16).unwrap();
+        let s = BigUint::parse_bytes(s, 16).unwrap();
+
+        let s_inv = s.modpow(&(N - 2.to_biguint().unwrap()), N);
+        let u = &z * &s_inv % N;
+        let v = &r * &s_inv % N;
+
+        return (G * u + self * v).get_x().get_value() == &r
+    }
 }
 
 impl PartialEq for EllipticCurve {
